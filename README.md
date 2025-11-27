@@ -1,60 +1,127 @@
-# Patient Records SFTP Extractor
+Patient Records SFTP Extractor
+==============================
 
-Extract medical records from AWS SFTP server and organize by patient name.
+A lightweight Python utility that connects to an AWS SFTP server, downloads medical records, and organizes them into patient folders.
 
-## Status: PENDING AUTHENTICATION
 
-Waiting for SFTP credentials (password or SSH key) from data provider.
+Status
+------
 
-## SFTP Connection Details
-- **Server**: s-e3199fe687574abf9.server.transfer.us-east-2.amazonaws.com
-- **Username**: premierliposuction_user1
-- **Auth**: Pending (need password or SSH key)
+Awaiting SFTP authentication credentials from the data provider.
 
-## Files
 
-| File | Description |
-|------|-------------|
-| `extract_patient_records.py` | Main extraction script |
-| `README.md` | This file |
+Connection Details
+------------------
 
-## Data Sources (Local)
-- `~/Downloads/PatientDocuments.csv` - 80,079 document records with SFTP paths
-- `~/Downloads/File Recovery  Kenn/` - Additional CSV files (appointments, invoices, etc.)
+    Server      s-e3199fe687574abf9.server.transfer.us-east-2.amazonaws.com
+    Username    premierliposuction_user1
+    Port        22
+    Auth        Password or SSH key (pending)
 
-## Usage
 
-Once you have the password:
+Data Sources
+------------
 
-```bash
-python3 extract_patient_records.py
+The extraction script reads from local CSV index files that map document metadata to remote file paths.
+
+    PatientDocuments.csv        80,079 records      Primary document index
+    PatientAppointments.csv      7,879 records      Appointment history
+    PatientCurrentMedical.csv    4,681 records      Medical information
+    PatientInvoices.csv          2,689 records      Billing records
+    PatientMedicalHistory.csv    8,051 records      Patient history
+    PatientSurgeries.csv           521 records      Surgery records
+    PatientTreatments.csv            2 records      Treatment images
+
+
+Before and After
+----------------
+
+The raw CSV contains document paths scattered across the SFTP server.
+
+Before
+
+```
+ClinicalDocuments/File/2022/0308/2.rtf
+ClinicalDocuments/File/2022/0316/5.rtf
+ClinicalDocumentsPages/2022/1005/3464_1.jpeg
+ClinicalDocuments/File/2022/1005/3465.pdf
 ```
 
-The script will:
-1. Parse PatientDocuments.csv
-2. Connect to SFTP with password
-3. Download files to `~/Desktop/PatientRecords/LastName, FirstName/`
+After running the extraction, files are organized by patient name.
 
-## Test Configuration
+After
 
-Currently set to test with Patient ID 1 (Test, Patricia - 68 documents).
-
-To change test patients, edit `TEST_PATIENT_IDS` in the script:
-```python
-TEST_PATIENT_IDS = {1}  # Single patient test
-TEST_PATIENT_IDS = {1, 2}  # Two patients
-TEST_PATIENT_IDS = None  # All patients (full extraction)
+```
+PatientRecords/
+    Test, Patricia/
+        2.rtf
+        5.rtf
+        3464_1.jpeg
+        3465.pdf
+    Allred, Kristian/
+        3_1.png
+        4.rtf
+        9.rtf
 ```
 
-## Requirements
+
+Installation
+------------
 
 ```bash
 pip3 install paramiko
 ```
 
-## Next Steps
 
-1. Obtain SFTP password or SSH key from MyPatientNOW/data provider
-2. Run test extraction with 1-2 patients
-3. Verify downloads
-4. Run full extraction (~80,000 files, ~4,107 patients)
+Usage
+-----
+
+```bash
+python3 extract_patient_records.py
+```
+
+The script prompts for the SFTP password, connects to the server, and downloads files into organized patient folders at ~/Desktop/PatientRecords/
+
+
+Configuration
+-------------
+
+Edit the TEST_PATIENT_IDS variable in the script to control which patients to process.
+
+Single patient test
+
+```python
+TEST_PATIENT_IDS = {1}
+```
+
+Multiple patients
+
+```python
+TEST_PATIENT_IDS = {1, 2, 3}
+```
+
+Full extraction of all patients
+
+```python
+TEST_PATIENT_IDS = None
+```
+
+
+Workflow
+--------
+
+1. Obtain SFTP password or SSH key from the data provider
+2. Run test extraction with one patient
+3. Verify downloaded files
+4. Run full extraction for all 4,107 patients
+
+
+Technical Notes
+---------------
+
+The script uses paramiko for SFTP connectivity. File paths are parsed from the Path column in PatientDocuments.csv. Patient folders are named using the format LastName, FirstName.
+
+Approximately 80,000 files across two directories on the remote server
+
+    ClinicalDocuments/          RTF consent forms, PDFs, EML emails, XML
+    ClinicalDocumentsPages/     PNG and JPEG scanned documents and photos
